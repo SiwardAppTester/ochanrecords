@@ -34,12 +34,16 @@ export function AmbientAudio() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true);
+  // Sound is on unless the visitor has turned it off. Starting this at
+  // `false` made the control show the muted line during the second or two
+  // before playback is allowed — so a page that was about to play looked
+  // like a page that had decided not to.
+  const [soundOn, setSoundOn] = useState(true);
   const [available, setAvailable] = useState(false);
 
   // Same treatment as the logo: the icon splits along a dark section edge
   // rather than switching colour at a threshold.
-  const [band] = useDarkBands([buttonRef], [available, muted]);
+  const [band] = useDarkBands([buttonRef], [available, soundOn]);
 
   // Only mount the control once the file is confirmed present, so a missing
   // track leaves no orphan button on the page.
@@ -55,7 +59,10 @@ export function AmbientAudio() {
 
   useEffect(() => {
     if (!available) return;
-    if (localStorage.getItem(STORAGE_KEY) === "1") return;
+    if (localStorage.getItem(STORAGE_KEY) === "1") {
+      setSoundOn(false);
+      return;
+    }
 
     const audio = audioRef.current;
     if (!audio) return;
@@ -77,7 +84,7 @@ export function AmbientAudio() {
         .play()
         .then(() => {
           setPlaying(true);
-          setMuted(false);
+          setSoundOn(true);
           fadeIn();
           detach();
         })
@@ -114,15 +121,15 @@ export function AmbientAudio() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (playing && !muted) {
+    if (soundOn && playing) {
       audio.pause();
-      setMuted(true);
+      setSoundOn(false);
       localStorage.setItem(STORAGE_KEY, "1");
     } else {
       audio.volume = TARGET_VOLUME;
       audio.play().then(() => {
         setPlaying(true);
-        setMuted(false);
+        setSoundOn(true);
         localStorage.removeItem(STORAGE_KEY);
       });
     }
@@ -142,19 +149,19 @@ export function AmbientAudio() {
         ref={buttonRef}
         type="button"
         onClick={toggle}
-        aria-label={muted ? "Play music" : "Mute music"}
-        title={muted ? "Play music" : "Mute music"}
+        aria-label={soundOn ? "Mute music" : "Play music"}
+        title={soundOn ? "Mute music" : "Play music"}
         className="group fixed bottom-7 right-7 z-40 block h-5 w-9 sm:bottom-9 sm:right-10"
       >
         <span className="absolute inset-0 opacity-70 transition-opacity duration-500 group-hover:opacity-100">
-          <Icon muted={muted} color="bg-bronze" line="bg-bronze" />
+          <Icon muted={!soundOn} color="bg-bronze" line="bg-bronze" />
         </span>
         <span
           aria-hidden
           className="absolute inset-0 opacity-80 transition-opacity duration-500 group-hover:opacity-100"
           style={{ clipPath: bandClip(band) }}
         >
-          <Icon muted={muted} color="bg-bone" line="bg-bone" />
+          <Icon muted={!soundOn} color="bg-bone" line="bg-bone" />
         </span>
       </button>
     </>

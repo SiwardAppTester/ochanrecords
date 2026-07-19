@@ -25,9 +25,10 @@ import { bandClip, useDarkBands } from "@/lib/useDarkBand";
 // homepage. Universally supported.
 const SRC = "/audio/theme.m4a";
 const TARGET_VOLUME = 0.32;
-// Long, slow rise. The track should arrive under the intro rather than
-// announce itself once the page is already up.
-const FADE_MS = 6000;
+// Slow enough to arrive rather than announce itself, short enough that the
+// opening seconds are actually audible — at six seconds the first bars were
+// effectively silent and the music seemed not to have started.
+const FADE_MS = 3000;
 const STORAGE_KEY = "ocham:audio-muted";
 
 export function AmbientAudio() {
@@ -72,13 +73,25 @@ export function AmbientAudio() {
       const start = performance.now();
       const step = (now: number) => {
         const t = Math.min(1, (now - start) / FADE_MS);
-        audio.volume = TARGET_VOLUME * t;
+        // Ramp from a floor, not from silence.
+        audio.volume = TARGET_VOLUME * (0.15 + 0.85 * t);
         if (t < 1) raf = requestAnimationFrame(step);
       };
       raf = requestAnimationFrame(step);
     };
 
+    // Guard against re-entry. Without it a single scroll — which fires
+    // dozens of events — called start() dozens of times, and each call reset
+    // the volume to 0 and began a fresh fade. The track was playing the
+    // whole time, held at silence by its own restarts, which is why it only
+    // seemed to work when the button forced the volume up.
+    let started = false;
+
     const start = () => {
+      if (started) return;
+      started = true;
+      detach();
+
       audio.volume = 0;
       audio
         .play()
@@ -86,10 +99,12 @@ export function AmbientAudio() {
           setPlaying(true);
           setSoundOn(true);
           fadeIn();
-          detach();
         })
         .catch(() => {
-          // Blocked. The listeners below will catch the first gesture.
+          // Blocked — almost always on a first visit. Re-arm so the next
+          // gesture gets another go.
+          started = false;
+          attach();
         });
     };
 
@@ -99,6 +114,10 @@ export function AmbientAudio() {
       "scroll",
       "touchstart",
     ];
+    const attach = () =>
+      events.forEach((e) =>
+        window.addEventListener(e, start, { once: true, passive: true }),
+      );
     const detach = () =>
       events.forEach((e) => window.removeEventListener(e, start));
 
@@ -106,9 +125,7 @@ export function AmbientAudio() {
     // already rising by the time the page is revealed, rather than starting
     // after it. Blocked attempts fall through to the gesture listeners.
     const timer = window.setTimeout(start, 150);
-    events.forEach((e) =>
-      window.addEventListener(e, start, { once: false, passive: true }),
-    );
+    attach();
 
     return () => {
       window.clearTimeout(timer);

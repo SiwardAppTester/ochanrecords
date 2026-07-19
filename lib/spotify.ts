@@ -80,13 +80,38 @@ type RawAlbum = {
  * down — a label site should still render its catalogue if a third party is
  * having a bad day.
  */
+/**
+ * Last known good result per artist.
+ *
+ * Spotify throttles shared cloud IPs hard, and a 429 can carry a retry-after
+ * measured in hours. Without this, one throttled request replaced a working
+ * discography with an empty page — and because that empty page was then
+ * cached, the site stayed blank long after Spotify had recovered.
+ *
+ * Held in module scope, so it survives for the life of a serverless
+ * instance. Not a real cache and not meant to be: it exists so a failure
+ * degrades to slightly stale data instead of to nothing.
+ */
+const lastGood = new Map<string, { albums: SpotifyAlbum[]; at: number }>();
+const LAST_GOOD_TTL = 24 * 60 * 60 * 1000;
+
 export async function getArtistAlbums(
   artistId: string,
 ): Promise<SpotifyAlbum[]> {
+  const fallback = () => {
+    const held = lastGood.get(artistId);
+    if (held && Date.now() - held.at < LAST_GOOD_TTL) {
+      console.warn("[spotify] serving last known good discography");
+      return held.albums;
+    }
+    return [];
+  };
+
   const token = await getToken();
-  if (!token) return [];
+  if (!token) return fallback();
 
   const items: RawAlbum[] = [];
+  let failed = false;
 
   // Spotify caps this endpoint at 10 per request — anything higher is
   // rejected outright with "Invalid limit", not silently clamped. So the
@@ -110,10 +135,13 @@ export async function getArtistAlbums(
     );
 
     if (!res.ok) {
+      // A 429 carries retry-after in seconds and can run into the hours.
       console.error(
         `[spotify] albums request failed (offset ${page * PAGE}):`,
         res.status,
+        res.headers.get("retry-after") ?? "",
       );
+      failed = true;
       break;
     }
 
@@ -146,7 +174,18 @@ export async function getArtistAlbums(
     });
   }
 
-  return unique.sort((a, b) => b.releaseDate.localeCompare(a.releaseDate));
+  const sorted = unique.sort((a, b) =>
+    b.releaseDate.localeCompare(a.releaseDate),
+  );
+
+  // Only a clean, non-empty run is worth remembering — and only a clean run
+  // should be allowed to replace what is already on the page.
+  if (!failed && sorted.length > 0) {
+    lastGood.set(artistId, { albums: sorted, at: Date.now() });
+    return sorted;
+  }
+
+  return sorted.length > 0 ? sorted : fallback();
 }
 
 /**

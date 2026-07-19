@@ -41,6 +41,8 @@ export async function GET() {
       "Credentials contain leading/trailing whitespace — re-paste them in Vercel.";
   }
 
+  let token = "";
+
   // Step 1: can we get a token at all?
   try {
     const res = await fetch("https://accounts.spotify.com/api/token", {
@@ -62,6 +64,7 @@ export async function GET() {
           : `Token request failed with ${res.status}.`;
       return Response.json(report, { status: 200 });
     }
+    token = ((await res.json()) as { access_token?: string }).access_token ?? "";
   } catch (error) {
     report.tokenStatus = "network error";
     report.tokenError = String(error);
@@ -69,16 +72,48 @@ export async function GET() {
     return Response.json(report, { status: 200 });
   }
 
-  // Step 2: does the album call return anything?
+  // Step 2: the album call, made raw so the status is visible. Going through
+  // getArtistAlbums swallows it — that function is built to degrade quietly
+  // in production, which is exactly wrong when you are trying to diagnose it.
+  const url = `https://api.spotify.com/v1/artists/${ARTIST_ID}/albums?include_groups=album,single&market=NL&limit=50`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    report.albumsStatus = res.status;
+    report.rateLimitRetryAfter = res.headers.get("retry-after");
+
+    if (!res.ok) {
+      report.albumsError = (await res.text()).slice(0, 400);
+      report.verdict =
+        res.status === 429
+          ? "Rate limited by Spotify. Shared cloud IPs get throttled far harder than a home connection."
+          : `Album request failed with ${res.status}.`;
+      return Response.json(report, { status: 200 });
+    }
+
+    const json = (await res.json()) as { items?: Array<{ name: string }> };
+    report.rawItemCount = json.items?.length ?? 0;
+    report.firstRawItem = json.items?.[0]?.name ?? null;
+  } catch (error) {
+    report.albumsStatus = "network error";
+    report.albumsError = String(error);
+  }
+
+  // And through the real code path, so we can tell a Spotify problem from a
+  // caching problem inside our own function.
   const albums = await getArtistAlbums(ARTIST_ID);
-  report.albumCount = albums.length;
+  report.albumCountViaAppCode = albums.length;
   report.firstAlbum = albums[0]?.name ?? null;
 
   if (!report.verdict) {
     report.verdict =
       albums.length > 0
         ? "Working. If pages are still empty they are being served from a cached build — redeploy with the build cache disabled."
-        : "Token works but no albums came back.";
+        : `Raw call returned ${report.rawItemCount} items but the app path returned 0 — the cached fetch inside the app is stale.`;
   }
 
   return Response.json(report, { status: 200 });

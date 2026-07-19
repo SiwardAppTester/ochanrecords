@@ -87,23 +87,52 @@ export function AmbientAudio() {
     // seemed to work when the button forced the volume up.
     let started = false;
 
-    const start = () => {
+    /**
+     * Unmute an already-running track, or start it outright.
+     *
+     * Browsers refuse *audible* autoplay before a gesture, but they permit
+     * muted playback. So on load the track starts muted and keeps running:
+     * by the time permission arrives it is already thirty seconds in and
+     * simply becomes audible, instead of beginning from the top. That is as
+     * close to "it was always playing" as the platform allows.
+     */
+    const goAudible = () => {
       if (started) return;
       started = true;
       detach();
 
+      audio.muted = false;
       audio.volume = 0;
-      audio
-        .play()
+
+      const resume = audio.paused ? audio.play() : Promise.resolve();
+      resume
         .then(() => {
           setPlaying(true);
           setSoundOn(true);
           fadeIn();
         })
         .catch(() => {
-          // Blocked — almost always on a first visit. Re-arm so the next
-          // gesture gets another go.
+          // Refused. Fall back to silent playback and wait for a gesture.
           started = false;
+          audio.muted = true;
+          attach();
+        });
+    };
+
+    // Muted playback is allowed without a gesture, so get the track moving
+    // immediately and try to make it audible in the same breath. On a repeat
+    // visit the browser usually says yes and nothing is ever silent.
+    const start = () => {
+      audio.muted = true;
+      audio.volume = 0;
+      audio
+        .play()
+        .then(() => {
+          setPlaying(true);
+          goAudible();
+        })
+        .catch(() => {
+          // Even muted playback refused — rare. Gestures will handle it.
           attach();
         });
     };
@@ -116,10 +145,10 @@ export function AmbientAudio() {
     ];
     const attach = () =>
       events.forEach((e) =>
-        window.addEventListener(e, start, { once: true, passive: true }),
+        window.addEventListener(e, goAudible, { once: true, passive: true }),
       );
     const detach = () =>
-      events.forEach((e) => window.removeEventListener(e, start));
+      events.forEach((e) => window.removeEventListener(e, goAudible));
 
     // Straight away, while the intro curtain is still up — so the music is
     // already rising by the time the page is revealed, rather than starting
@@ -138,11 +167,12 @@ export function AmbientAudio() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (soundOn && playing) {
+    if (soundOn && playing && !audio.muted) {
       audio.pause();
       setSoundOn(false);
       localStorage.setItem(STORAGE_KEY, "1");
     } else {
+      audio.muted = false;
       audio.volume = TARGET_VOLUME;
       audio.play().then(() => {
         setPlaying(true);

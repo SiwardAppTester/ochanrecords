@@ -107,14 +107,30 @@ export function AmbientAudio() {
       const resume = audio.paused ? audio.play() : Promise.resolve();
       resume
         .then(() => {
-          setPlaying(true);
-          setSoundOn(true);
-          fadeIn();
+          // Verify, don't assume. Setting `muted = false` on an already
+          // playing element does not reject — the browser simply ignores it,
+          // or pauses the element, and the promise still resolves. Trusting
+          // it meant we detached the gesture listeners while the track was
+          // still silent, so nothing but the button could ever recover it.
+          // That is the "sometimes there is no sound until you press it".
+          window.setTimeout(() => {
+            if (audio.muted || audio.paused) {
+              started = false;
+              audio.muted = true;
+              if (audio.paused) void audio.play().catch(() => {});
+              attach();
+              return;
+            }
+            setPlaying(true);
+            setSoundOn(true);
+            fadeIn();
+          }, 60);
         })
         .catch(() => {
-          // Refused. Fall back to silent playback and wait for a gesture.
+          // Refused outright. Fall back to silent playback and wait.
           started = false;
           audio.muted = true;
+          void audio.play().catch(() => {});
           attach();
         });
     };
@@ -143,9 +159,12 @@ export function AmbientAudio() {
       "scroll",
       "touchstart",
     ];
+    // Not `{ once: true }`. A gesture that fails to win permission would
+    // otherwise consume the only listener and leave the page permanently
+    // silent; goAudible's own re-entry guard already prevents duplicates.
     const attach = () =>
       events.forEach((e) =>
-        window.addEventListener(e, goAudible, { once: true, passive: true }),
+        window.addEventListener(e, goAudible, { passive: true }),
       );
     const detach = () =>
       events.forEach((e) => window.removeEventListener(e, goAudible));

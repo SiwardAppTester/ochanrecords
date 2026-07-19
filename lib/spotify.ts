@@ -86,23 +86,43 @@ export async function getArtistAlbums(
   const token = await getToken();
   if (!token) return [];
 
-  const res = await fetch(
-    `${API}/artists/${artistId}/albums?include_groups=album,single&market=NL&limit=50`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      // Re-checked hourly. A new release appearing an hour late is fine;
-      // hitting Spotify on every page view is not.
-      next: { revalidate: 3600 },
-    },
-  );
+  const items: RawAlbum[] = [];
 
-  if (!res.ok) {
-    console.error("[spotify] albums request failed:", res.status);
-    return [];
+  // Spotify caps this endpoint at 10 per request — anything higher is
+  // rejected outright with "Invalid limit", not silently clamped. So the
+  // full discography has to be paged.
+  //
+  // The cap is lower than the documented 50 and can change again, so treat
+  // `total` from the response as the source of truth rather than assuming
+  // any particular page size.
+  const PAGE = 10;
+  const MAX_PAGES = 10; // 100 records; a backstop against looping forever
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const res = await fetch(
+      `${API}/artists/${artistId}/albums?include_groups=album,single&market=NL&limit=${PAGE}&offset=${page * PAGE}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        // Re-checked hourly. A new release appearing an hour late is fine;
+        // hitting Spotify on every page view is not.
+        next: { revalidate: 3600 },
+      },
+    );
+
+    if (!res.ok) {
+      console.error(
+        `[spotify] albums request failed (offset ${page * PAGE}):`,
+        res.status,
+      );
+      break;
+    }
+
+    const json = (await res.json()) as { items?: RawAlbum[]; total?: number };
+    const batch = json.items ?? [];
+    items.push(...batch);
+
+    if (batch.length < PAGE || items.length >= (json.total ?? 0)) break;
   }
-
-  const json = (await res.json()) as { items?: RawAlbum[] };
-  const items = json.items ?? [];
 
   // Spotify returns the same record once per market it was released in.
   // Deduplicate on name + date, keeping the first.

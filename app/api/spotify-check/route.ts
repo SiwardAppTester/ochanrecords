@@ -75,7 +75,7 @@ export async function GET() {
   // Step 2: the album call, made raw so the status is visible. Going through
   // getArtistAlbums swallows it — that function is built to degrade quietly
   // in production, which is exactly wrong when you are trying to diagnose it.
-  const url = `https://api.spotify.com/v1/artists/${ARTIST_ID}/albums?include_groups=album,single&market=NL&limit=50`;
+  const url = `https://api.spotify.com/v1/artists/${ARTIST_ID}/albums?include_groups=album,single&market=NL&limit=10`;
 
   try {
     const res = await fetch(url, {

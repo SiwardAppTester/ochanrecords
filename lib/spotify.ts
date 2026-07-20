@@ -95,6 +95,20 @@ type RawAlbum = {
 const lastGood = new Map<string, { albums: SpotifyAlbum[]; at: number }>();
 const LAST_GOOD_TTL = 24 * 60 * 60 * 1000;
 
+/**
+ * When Spotify says "not until", stop asking.
+ *
+ * A 429 carries a retry-after in seconds — often hours. Without this, every
+ * page render kept firing requests into a closed door, and sustained traffic
+ * while throttled is exactly what makes Spotify extend the block. So the
+ * deadline is recorded and requests are skipped until it passes.
+ *
+ * Capped at 24h so a malformed or absurd header can't disable the feed
+ * indefinitely.
+ */
+let throttledUntil = 0;
+const MAX_COOLDOWN = 24 * 60 * 60 * 1000;
+
 export async function getArtistAlbums(
   artistId: string,
 ): Promise<SpotifyAlbum[]> {
@@ -106,6 +120,14 @@ export async function getArtistAlbums(
     }
     return [];
   };
+
+  // Still inside a cooldown Spotify asked for: don't even try.
+  if (Date.now() < throttledUntil) {
+    console.warn(
+      `[spotify] throttled for another ${Math.round((throttledUntil - Date.now()) / 1000)}s — skipping request`,
+    );
+    return fallback();
+  }
 
   const token = await getToken();
   if (!token) return fallback();
@@ -136,11 +158,21 @@ export async function getArtistAlbums(
 
     if (!res.ok) {
       // A 429 carries retry-after in seconds and can run into the hours.
-      console.error(
-        `[spotify] albums request failed (offset ${page * PAGE}):`,
-        res.status,
-        res.headers.get("retry-after") ?? "",
-      );
+      // Record the deadline so nothing asks again before then.
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("retry-after") ?? 0);
+        if (Number.isFinite(retryAfter) && retryAfter > 0) {
+          throttledUntil = Date.now() + Math.min(retryAfter * 1000, MAX_COOLDOWN);
+        }
+        console.error(
+          `[spotify] rate limited — no further requests for ${Math.round((throttledUntil - Date.now()) / 1000)}s`,
+        );
+      } else {
+        console.error(
+          `[spotify] albums request failed (offset ${page * PAGE}):`,
+          res.status,
+        );
+      }
       failed = true;
       break;
     }

@@ -217,7 +217,12 @@ export function AmbientAudio() {
         onClick={toggle}
         aria-label={soundOn ? "Mute music" : "Play music"}
         title={soundOn ? "Mute music" : "Play music"}
-        className="group fixed bottom-7 right-7 z-40 block h-5 w-9 sm:bottom-9 sm:right-10"
+        // Above the grain layer (z-50), which is multiply-blended: sitting
+        // under it dragged the light colourway back toward the background
+        // and hid the switch entirely. The header is at z-60 for the same
+        // reason — anything that has to stay a specific colour belongs on
+        // top of the grain.
+        className="group fixed bottom-7 right-7 z-[60] block h-5 w-9 sm:bottom-9 sm:right-10"
       >
         <span className="absolute inset-0 opacity-70 transition-opacity duration-500 group-hover:opacity-100">
           <Icon muted={!soundOn} color="bg-bronze" line="bg-bronze" />

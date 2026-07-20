@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Waveform } from "@/components/site/Waveform";
 import { bandClip, useDarkBands } from "@/lib/useDarkBand";
@@ -32,6 +33,7 @@ const FADE_MS = 3000;
 const STORAGE_KEY = "ocham:audio-muted";
 
 export function AmbientAudio() {
+  const pathname = usePathname();
   const audioRef = useRef<HTMLAudioElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -44,7 +46,12 @@ export function AmbientAudio() {
 
   // Same treatment as the logo: the icon splits along a dark section edge
   // rather than switching colour at a threshold.
-  const [band] = useDarkBands([buttonRef], [available, soundOn]);
+  //
+  // `pathname` is load-bearing. Without it the hook never re-queries after a
+  // client-side navigation, so it keeps measuring against the previous
+  // page's dark sections — which are no longer in the document and report an
+  // empty rect, leaving the icon dark on a dark page.
+  const [band] = useDarkBands([buttonRef], [available, soundOn, pathname]);
 
   // Only mount the control once the file is confirmed present, so a missing
   // track leaves no orphan button on the page.

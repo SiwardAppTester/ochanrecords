@@ -89,7 +89,7 @@ export default async function Home() {
               all the way back to the surface colour, so it reads as an
               unevenness in the paper instead of a photograph. */}
           <PhotoBackdrop
-            src="/textures/hero.jpg"
+            src="/textures/veil.jpg"
             scrim="veil"
             position="center"
           />

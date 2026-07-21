@@ -21,7 +21,7 @@ export const SITE = {
     // one that carries the playlists. The `?si=` token on the share link is
     // a referrer tag tied to whoever copied it, so it is stripped.
     spotify: "https://open.spotify.com/user/31stgsnfv2eowklmpflvaw7pzb74",
-    soundcloud: "https://soundcloud.com/matswestbroek",
+    soundcloud: "https://soundcloud.com/ochamrecords",
     bandcamp: "",
   } as Record<string, string>,
 

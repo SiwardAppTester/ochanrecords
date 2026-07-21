@@ -10,7 +10,15 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ReleaseMarquee } from "@/components/site/ReleaseMarquee";
 import { getArtists, getEvents } from "@/lib/content";
 import { getDiscography } from "@/lib/spotify";
+
 import { formatMonthYear, formatEventDate } from "@/lib/format";
+
+// Spotify data is cached for an hour inside lib/spotify; this stops the page
+// itself from being frozen at build time. Without it the page is generated
+// once, during the deploy, and a build that happened while Spotify was
+// unreachable stays empty forever — which is exactly what happened here.
+export const revalidate = 3600;
+
 
 export default async function Home() {
   const [artists, events] = await Promise.all([getArtists(), getEvents()]);

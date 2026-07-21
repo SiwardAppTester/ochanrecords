@@ -11,6 +11,12 @@ import { getArtist, getArtists, getReleasesByArtist } from "@/lib/content";
 import { getDiscography } from "@/lib/spotify";
 import { formatMonthYear } from "@/lib/format";
 
+// Spotify data is cached for an hour inside lib/spotify; this stops the page
+// itself from being frozen at build time. Without it the page is generated
+// once, during the deploy, and a build that happened while Spotify was
+// unreachable stays empty forever — which is exactly what happened here.
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {

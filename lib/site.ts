@@ -11,10 +11,16 @@ export const SITE = {
   name: "Ocham Records",
   established: "1807",
 
-  /** Label accounts. Fill these in — see the note in components/site/Footer. */
+  /**
+   * Label accounts — not the artist's. Mats' own profiles live on his entry
+   * in lib/content/placeholder.ts and are what the artist page links to.
+   */
   socials: {
-    instagram: "https://www.instagram.com/matswestbroek",
-    spotify: "https://open.spotify.com/artist/22bQJrUFkEHoC4Srw85AuA",
+    instagram: "https://www.instagram.com/ochamrecords",
+    // The label's Spotify *user* profile, not an artist page — this is the
+    // one that carries the playlists. The `?si=` token on the share link is
+    // a referrer tag tied to whoever copied it, so it is stripped.
+    spotify: "https://open.spotify.com/user/31stgsnfv2eowklmpflvaw7pzb74",
     soundcloud: "https://soundcloud.com/matswestbroek",
     bandcamp: "",
   } as Record<string, string>,
@@ -24,7 +30,7 @@ export const SITE = {
    * inboxes reads as pretend infrastructure.
    */
   email: {
-    general: "mats@ochamrecords.com",
+    general: "info@ochamrecords.com",
   },
 } as const;
 

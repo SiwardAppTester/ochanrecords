@@ -19,6 +19,9 @@ import { formatMonthYear, formatEventDate } from "@/lib/format";
 // unreachable stays empty forever — which is exactly what happened here.
 export const revalidate = 3600;
 
+// The catalogue marquee is parked for now. Flip to true to bring it back —
+// the Spotify fetch below still runs, so nothing else has to change.
+const SHOW_RELEASES = false;
 
 export default async function Home() {
   const [artists, events] = await Promise.all([getArtists(), getEvents()]);
@@ -34,27 +37,25 @@ export default async function Home() {
            corner, so repeating it in 9rem type is decoration, and a CTA pair
            here would make an image this quiet work as a billboard. What's
            left is the picture, one line, and room. ---------- */}
-      <section
-        data-surface="dark"
-        className="relative flex h-svh flex-col justify-end overflow-hidden px-6 pb-10 sm:px-10 sm:pb-12"
-      >
-        {/* A 3:2 landscape in a full-height frame, so the sides get cropped
-            hard on desktop and the top and bottom on a phone. Anchored just
-            below centre keeps the figure and the horizon in shot at both
-            extremes — they are what give the picture its scale. */}
+      {/* No `data-surface="dark"` any more: the mist is a light image, so the
+          logo and Menu keep their dark colourway over it. */}
+      <section className="relative flex h-svh flex-col justify-end overflow-hidden px-6 pb-10 sm:px-10 sm:pb-12">
+        {/* A square in a full-height frame: cropped top and bottom on
+            desktop, left and right on a phone. Anchored left of centre so
+            the gold seam stays in shot when the sides go. */}
         <PhotoBackdrop
-          src="/textures/hero-vista.jpg"
-          scrim="hairline-dark"
-          position="center 55%"
+          src="/textures/hero-mist.jpg"
+          scrim="hairline"
+          position="35% center"
           priority
         />
 
         <div className="relative mx-auto w-full max-w-6xl">
           <div className="flex items-end justify-between gap-10">
-            <p className="max-w-md font-display text-2xl leading-[1.25] text-bone sm:text-3xl">
-              A short roster,
+            <p className="max-w-md font-display text-2xl leading-[1.25] text-bronze sm:text-3xl">
+              Groove. Emotion.
               <br />
-              <em className="italic">released slowly.</em>
+              <em className="italic">Depth.</em>
             </p>
 
             {/* Small, faint, and sitting just above the ruled footer line —
@@ -62,11 +63,9 @@ export default async function Home() {
                 control and not a second headline. */}
             <Waveform
               height={30}
-              color="bg-bone"
+              color="bg-bronze"
               className="hidden w-36 opacity-40 sm:flex"
             />
-
-
           </div>
 
           {/* Ruled footer line: where the label is, and the cue to move on.
@@ -75,10 +74,10 @@ export default async function Home() {
             className="mt-8 h-px w-full"
             style={{
               background:
-                "linear-gradient(to right, color-mix(in oklab, var(--color-bone) 30%, transparent), color-mix(in oklab, var(--color-bone) 8%, transparent))",
+                "linear-gradient(to right, color-mix(in oklab, var(--color-bronze) 30%, transparent), color-mix(in oklab, var(--color-bronze) 8%, transparent))",
             }}
           />
-          <div className="mt-4 flex items-baseline justify-between font-mono text-[11px] uppercase tracking-[0.22em] text-bone/45">
+          <div className="mt-4 flex items-baseline justify-between font-mono text-[11px] uppercase tracking-[0.22em] text-bronze/55">
             <span>Amsterdam</span>
             <span className="hidden sm:inline">Independent — Est. 1807</span>
             <span>Scroll ↓</span>
@@ -111,7 +110,12 @@ export default async function Home() {
                 <div>
                   <p className="eyebrow">{artist.role}</p>
                   <h2 className="display-lg mt-3 text-bronze">{artist.name}</h2>
-                  <p className="prose-warm mt-6">{artist.bio}</p>
+                  {/* First paragraph only. The full bio is two paragraphs
+                      and the second is a list of places he has played —
+                      that's what "Read more" is for. */}
+                  <p className="prose-warm mt-6">
+                    {artist.bio?.split("\n\n")[0]}
+                  </p>
                   <div className="mt-8">
                     <ButtonLink
                       href={`/artists/${artist.slug}`}
@@ -151,7 +155,7 @@ export default async function Home() {
            A drifting wall rather than a four-up grid: the catalogue is long
            enough that a fixed grid would have to pick winners, and this way
            records keep arriving without anyone clicking. ---------- */}
-      {albums.length > 0 && (
+      {SHOW_RELEASES && albums.length > 0 && (
         <section className="py-24">
           <div className="mx-auto mb-12 flex w-full max-w-6xl items-end justify-between px-6 sm:px-10">
             <div>
@@ -169,40 +173,44 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ---------- Next date ---------- */}
-      {nextEvent && (
-        <section
-          data-surface="dark"
-          className="relative overflow-hidden bg-pitch"
-        >
-          {/* Flat, deliberately. The ribbon image now carries the hero at the
+      {/* ---------- Next date
+           Always on the page. With nothing booked it says so rather than
+           disappearing: a missing section reads as a site that forgot about
+           live dates, "To be announced" reads as a label between shows. ---------- */}
+      <section
+        data-surface="dark"
+        className="relative overflow-hidden bg-pitch"
+      >
+        {/* Flat, deliberately. The ribbon image now carries the hero at the
               top of this same page; repeating it here would read as one long
               backdrop rather than two moments. A plain dark band gives the
               picture above somewhere to land. */}
-          <LightWash origin="bottom-left" className="opacity-25" />
-          <div className="mx-auto w-full max-w-6xl px-6 py-32 sm:px-10">
-            <Reveal>
-              <p className="eyebrow" style={{ color: "var(--color-amber)" }}>
-                Next date
-              </p>
-              <h2 className="display-lg mt-4 text-bone">{nextEvent.title}</h2>
-              <p className="mt-4 font-mono text-sm text-bone/60">
-                {formatEventDate(nextEvent.startsAt)}
-                {nextEvent.venue && ` — ${nextEvent.venue}`}
-                {nextEvent.city && `, ${nextEvent.city}`}
-              </p>
-              <div className="mt-9">
-                <Link
-                  href="/dates"
-                  className="inline-flex items-center rounded-[var(--radius-edge)] border border-bone/30 px-6 py-3 text-sm tracking-wide text-bone transition-colors duration-500 hover:bg-bone/10"
-                >
-                  All dates
-                </Link>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-      )}
+        <LightWash origin="bottom-left" className="opacity-25" />
+        <div className="mx-auto w-full max-w-6xl px-6 py-32 sm:px-10">
+          <Reveal>
+            <p className="eyebrow" style={{ color: "var(--color-amber)" }}>
+              Next date
+            </p>
+            {nextEvent ? (
+              <>
+                <h2 className="display-lg mt-4 text-bone">{nextEvent.title}</h2>
+                <p className="mt-4 font-mono text-sm text-bone/60">
+                  {formatEventDate(nextEvent.startsAt)}
+                  {nextEvent.venue && ` — ${nextEvent.venue}`}
+                  {nextEvent.city && `, ${nextEvent.city}`}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="display-lg mt-4 text-bone">To be announced</h2>
+                <p className="mt-4 font-mono text-sm text-bone/60">
+                  Nothing on sale right now
+                </p>
+              </>
+            )}
+          </Reveal>
+        </div>
+      </section>
 
       {/* ---------- Pitch
            One line, one link, two rules. Everything the section used to say
@@ -258,7 +266,6 @@ export default async function Home() {
           </div>
         </Reveal>
       </section>
-
     </main>
   );
 }

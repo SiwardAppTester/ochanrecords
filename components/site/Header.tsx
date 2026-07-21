@@ -24,12 +24,17 @@ const DOCK_DISTANCE = 0.55;
 /**
  * Size of the logo when it is sitting in the hero.
  *
+ * A multiple of the docked size, so it has to move whenever that does: these
+ * two numbers were cut by 1.2× (desktop) and 1.25× (mobile) when the docked
+ * logo grew from h-16/h-20 to h-20/h-24, which leaves the hero logo the size
+ * it already was.
+ *
  * The mobile figure is lower than desktop only because it starts from a
- * smaller docked size (h-16 against h-20) and a narrower frame — the two
- * land at a similar share of the screen rather than a similar multiple.
+ * smaller docked size and a narrower frame — the two land at a similar share
+ * of the screen rather than a similar multiple.
  */
-const HERO_SCALE = 3.4;
-const HERO_SCALE_MOBILE = 3.0;
+const HERO_SCALE = 3.5;
+const HERO_SCALE_MOBILE = 2.9;
 
 /**
  * How far up the frame the enlarged logo sits, 0.5 being dead centre.
@@ -51,6 +56,13 @@ export function Header() {
   // The computed transform. Held as state rather than derived at render
   // time because it depends on the element's own measured box.
   const [logoStyle, setLogoStyle] = useState<React.CSSProperties>({});
+
+  // While the logo is enlarged in the hero it is drawn as a single image —
+  // the dark colourway, because the hero photograph is a pale mist. The
+  // two-colourway stack only exists so the mark can split along a dark
+  // section edge; blown up over one uniform photo it has nothing to split
+  // against, and the two layers just read as a double exposure.
+  const [inHero, setInHero] = useState(false);
 
   // Both colourways are stacked and the light one is clipped to whatever
   // part crosses a dark section, so the mark splits along the edge instead
@@ -77,6 +89,7 @@ export function Header() {
   useEffect(() => {
     if (!isHome || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setLogoStyle({});
+      setInHero(false);
       return;
     }
 
@@ -117,6 +130,9 @@ export function Header() {
         transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`,
         willChange: p > 0 && p < 1 ? "transform" : undefined,
       });
+      // At p === 1 the logo is docked over the same dark hero, so the clipped
+      // stack renders as pure light there too — the swap has nothing to pop.
+      setInHero(p < 1);
     };
 
     const onScroll = () => {
@@ -171,19 +187,27 @@ export function Header() {
               width={900}
               height={900}
               priority
-              className="h-16 w-auto sm:h-20"
+              className="h-20 w-auto sm:h-24"
             />
-            {/* Light colourway, clipped to whatever part crosses a dark band. */}
-            <Image
-              src="/brand/logo/lockup-light.png"
-              alt=""
-              aria-hidden
-              width={900}
-              height={900}
-              priority
-              className="absolute inset-0 h-16 w-auto sm:h-20"
-              style={{ clipPath: bandClip(open ? null : logoBand) }}
-            />
+            {/* Light colourway, clipped to whatever part crosses a dark band.
+                Only once docked — in the hero the single image above is
+                already the light one. */}
+            {!inHero && (
+              <Image
+                src="/brand/logo/lockup-light.png"
+                alt=""
+                aria-hidden
+                width={900}
+                height={900}
+                priority
+                // left/top rather than inset-0: with `right: 0` and an auto
+                // width the overlay stretches to the parent box instead of
+                // matching the image under it, which is what made the two
+                // layers drift apart when scaled.
+                className="absolute left-0 top-0 h-20 w-auto sm:h-24"
+                style={{ clipPath: bandClip(open ? null : logoBand) }}
+              />
+            )}
           </span>
         </Link>
 

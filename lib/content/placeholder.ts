@@ -12,7 +12,10 @@ export const ARTISTS: Artist[] = [
     slug: "mats-westbroek",
     name: "Mats Westbroek",
     role: "Producer",
-    bio: "Placeholder biography. Mats Westbroek makes records slowly. Replace this with three or four sentences in his own voice — where he works, what he uses, and what he is chasing. Avoid genre lists; they date faster than anything else on a label site.",
+    // Two paragraphs, split on the blank line. The pages that render this
+    // use `whitespace-pre-line`, so the break survives without the bio
+    // having to become an array or carry markup.
+    bio: "Mats Westbroek is an Amsterdam-based DJ and producer creating melodic house with deeper grooves and a funkier edge. His tracks blend warm analog synths with organic instruments, all shaped through creative processing and driven by groovy drums. The result is a melodic sound that feels warm, human, and built for the dancefloor.\n\nHis sets revolve around his own original music and have taken him to clubs and venues across the Netherlands, Indonesia (Bali), Costa Rica, and Bonaire. His music has also been played at renowned events and venues including Burning Man, Tomorrowland, Ultra, and Pacha Ibiza.",
     portraitUrl: "/artists/mats-westbroek.jpg",
     // Awaiting the real profile URLs. Blank entries are filtered out before
     // rendering, so the artist page shows no link rather than a link to the
@@ -30,25 +33,8 @@ export const ARTISTS: Artist[] = [
 // Fill this in when OCH001 is real.
 export const RELEASES: Release[] = [];
 
-export const EVENTS: LabelEvent[] = [
-  {
-    id: "44444444-4444-4444-8444-444444444441",
-    title: "Ocham 001 — Release Night",
-    artistName: "Mats Westbroek",
-    venue: "Placeholder Venue",
-    city: "Amsterdam",
-    country: "NL",
-    startsAt: "2026-03-20T21:00:00+01:00",
-    ticketUrl: null,
-  },
-  {
-    id: "44444444-4444-4444-8444-444444444442",
-    title: "Placeholder Festival",
-    artistName: "Mats Westbroek",
-    venue: "Placeholder Stage",
-    city: "Rotterdam",
-    country: "NL",
-    startsAt: "2026-08-15T18:00:00+02:00",
-    ticketUrl: null,
-  },
-];
+// Empty on purpose. The two invented shows that used to live here read as
+// real bookings — "Placeholder Festival, Placeholder Stage" was the headline
+// on the home page. With nothing here the site says "To be announced", which
+// is true. Add real dates and both the home page and /dates pick them up.
+export const EVENTS: LabelEvent[] = [];

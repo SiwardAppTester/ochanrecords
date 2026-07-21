@@ -17,7 +17,8 @@ values (
   'mats-westbroek',
   'Mats Westbroek',
   'Producer',
-  'Placeholder biography. Mats Westbroek makes records slowly. Replace this with three or four sentences in his own voice — where he works, what he uses, and what he is chasing. Avoid genre lists; they date faster than anything else on a label site.',
+  -- E'' string so the \n\n paragraph break is stored as real newlines.
+  E'Mats Westbroek is an Amsterdam-based DJ and producer creating melodic house with deeper grooves and a funkier edge. His tracks blend warm analog synths with organic instruments, all shaped through creative processing and driven by groovy drums. The result is a melodic sound that feels warm, human, and built for the dancefloor.\n\nHis sets revolve around his own original music and have taken him to clubs and venues across the Netherlands, Indonesia (Bali), Costa Rica, and Bonaire. His music has also been played at renowned events and venues including Burning Man, Tomorrowland, Ultra, and Pacha Ibiza.',
   '/artists/mats-westbroek.jpg',
   '{"instagram": "https://www.instagram.com/matswestbroek", "spotify": "https://open.spotify.com/artist/22bQJrUFkEHoC4Srw85AuA", "soundcloud": "https://soundcloud.com/matswestbroek"}'::jsonb,  -- awaiting real profile URLs
   0,

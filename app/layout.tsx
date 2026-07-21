@@ -4,7 +4,6 @@ import { Grain } from "@/components/Grain";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Intro } from "@/components/site/Intro";
-import { AmbientAudio } from "@/components/site/AmbientAudio";
 import "./globals.css";
 
 // High-contrast editorial serif for display. This is the single choice doing
@@ -51,7 +50,6 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
-        <AmbientAudio />
         <Grain />
       </body>
     </html>

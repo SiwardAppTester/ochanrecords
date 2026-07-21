@@ -52,18 +52,25 @@ export default async function ArtistPage({ params }: Props) {
       <section className="relative overflow-hidden px-6 pb-24 pt-36 sm:px-10">
         <LightWash origin="top-left" />
         <div className="mx-auto w-full max-w-6xl">
+          {/* Home rather than /artists: with one artist on the roster, the
+              index page is a list of one and sending someone there is a dead
+              end. Point this back at /artists once there is a second name. */}
           <Link
-            href="/artists"
+            href="/"
             className="eyebrow transition-colors duration-500 hover:text-copper"
           >
-            ← Artists
+            ← Home
           </Link>
 
           <div className="mt-12 grid gap-14 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
             <Reveal>
               <p className="eyebrow">{artist.role}</p>
               <h1 className="display-xl mt-4 text-bronze">{artist.name}</h1>
-              {artist.bio && <p className="prose-warm mt-10">{artist.bio}</p>}
+              {artist.bio && (
+                <p className="prose-warm mt-10 whitespace-pre-line">
+                  {artist.bio}
+                </p>
+              )}
 
               {/* Artist profile player — appears once a Spotify URL is set. */}
               <SpotifyEmbed url={artist.links.spotify} className="mt-10" />
@@ -85,7 +92,11 @@ export default async function ArtistPage({ params }: Props) {
               )}
             </Reveal>
 
-            <Reveal delay={120}>
+            {/* Portrait first on a phone, where the two-column layout has
+                collapsed and the name would otherwise open the page with no
+                face attached. Ordered in CSS rather than moved in the markup
+                so the <h1> stays the first thing in the document. */}
+            <Reveal delay={120} className="order-first lg:order-none">
               {artist.portraitUrl ? (
                 <Image
                   src={artist.portraitUrl}

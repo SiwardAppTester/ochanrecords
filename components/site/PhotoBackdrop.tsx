@@ -25,6 +25,15 @@ type Props = {
   scrim?: "light" | "dark" | "hairline" | "hairline-dark" | "veil";
   /** Where the image is anchored when the frame crops it. */
   position?: string;
+  /**
+   * Softening, in pixels.
+   *
+   * Applied to the image alone, never to the section — blurring a parent
+   * would take the type with it. The image is scaled up slightly to
+   * compensate, because a blur samples beyond its own edges and would
+   * otherwise leave a pale rim around the frame.
+   */
+  blur?: number;
   priority?: boolean;
   className?: string;
 };
@@ -56,6 +65,7 @@ export function PhotoBackdrop({
   alt = "",
   scrim = "light",
   position = "center",
+  blur = 0,
   priority = false,
   className = "",
 }: Props) {
@@ -71,7 +81,16 @@ export function PhotoBackdrop({
         priority={priority}
         sizes="100vw"
         className="object-cover"
-        style={{ objectPosition: position }}
+        style={{
+          objectPosition: position,
+          ...(blur > 0 && {
+            filter: `blur(${blur}px)`,
+            // Overscan by roughly twice the blur radius. A blurred edge
+            // samples transparency from beyond the element and fades out,
+            // which shows up as a pale border around the frame.
+            transform: `scale(${1 + (blur * 2) / 100})`,
+          }),
+        }}
       />
       <div className="absolute inset-0" style={{ background: SCRIMS[scrim] }} />
       {/* Bottom fade so the photograph dissolves into the flat section

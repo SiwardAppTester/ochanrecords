@@ -38,13 +38,14 @@ export default async function Home() {
         data-surface="dark"
         className="relative flex h-svh flex-col justify-end overflow-hidden px-6 pb-10 sm:px-10 sm:pb-12"
       >
-        {/* Anchored left: the ribbons and their specular highlights live on
-            the right of the frame, so pulling the crop left keeps the open
-            side of the picture under the type. */}
+        {/* A 3:2 landscape in a full-height frame, so the sides get cropped
+            hard on desktop and the top and bottom on a phone. Anchored just
+            below centre keeps the figure and the horizon in shot at both
+            extremes — they are what give the picture its scale. */}
         <PhotoBackdrop
-          src="/textures/accent.jpg"
+          src="/textures/hero-vista.jpg"
           scrim="hairline-dark"
-          position="35% center"
+          position="center 55%"
           priority
         />
 

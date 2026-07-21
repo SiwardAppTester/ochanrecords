@@ -20,14 +20,12 @@ export const SITE = {
   } as Record<string, string>,
 
   /**
-   * Contact. One address and one number — a two-person label with three
-   * department inboxes reads as pretend infrastructure.
+   * Contact. One address — a two-person label with three department
+   * inboxes reads as pretend infrastructure.
    */
   email: {
     general: "mats@ochamrecords.com",
   },
-
-  phone: "+31 6 24432467",
 } as const;
 
 export const SOCIAL_LABELS: Record<string, string> = {

@@ -53,22 +53,6 @@ export default function ContactPage() {
             </span>
           </a>
 
-          <a
-            href={`tel:${SITE.phone.replace(/\s/g, "")}`}
-            className="group flex flex-col gap-2 border-b border-bronze/12 py-9 sm:flex-row sm:items-baseline sm:justify-between sm:gap-10"
-          >
-            <span className="eyebrow shrink-0 sm:w-32">Phone</span>
-            <span
-              className="min-w-0 flex-1 font-display text-bronze transition-colors duration-500 group-hover:text-copper"
-              style={{ fontSize: "clamp(1.75rem, 4.5vw, 3.25rem)", lineHeight: 1.05 }}
-            >
-              {SITE.phone}
-            </span>
-            <span className="hidden font-mono text-xs text-dust transition-transform duration-500 group-hover:translate-x-1 sm:block">
-              →
-            </span>
-          </a>
-
           {socials.length > 0 && (
             <div className="flex flex-col gap-4 border-b border-bronze/12 py-9 sm:flex-row sm:items-baseline sm:gap-10">
               <span className="eyebrow shrink-0 sm:w-32">Elsewhere</span>

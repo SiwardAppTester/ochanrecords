@@ -235,9 +235,34 @@ export function Header() {
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
+        {/* Watermark.
+            The mark PNG has no alpha — it is olive line art on white — so
+            `mix-blend-multiply` is doing the cutting out: on a light surface
+            multiply leaves white untouched and only the lines darken. An
+            alpha-less PNG at low opacity would otherwise sit there as a pale
+            square. Barely there on purpose; it should register as a texture
+            you notice on the second look, not as a background image. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-end overflow-hidden"
+        >
+          <Image
+            src="/brand/mark/mark-olive.png"
+            alt=""
+            width={1254}
+            height={1254}
+            // Pushed a fifth of its own width past the right edge, so it is
+            // cropped rather than framed — a mark half out of shot reads as
+            // watermark, one sitting neatly in the corner reads as a logo
+            // that has been put there.
+            className="w-[min(115vw,105vh)] max-w-none -translate-x-[6%] opacity-[0.035] mix-blend-multiply"
+          />
+        </div>
+
         {/* pt clears the floating logo; min-h + justify-center keeps the list
-            centred when it fits and lets it scroll when it doesn't. */}
-        <nav className="flex min-h-full flex-col justify-center px-6 pb-16 pt-36 sm:px-10 sm:pt-44">
+            centred when it fits and lets it scroll when it doesn't.
+            `relative` lifts it over the watermark. */}
+        <nav className="relative flex min-h-full flex-col justify-center px-6 pb-16 pt-36 sm:px-10 sm:pt-44">
           <ul className="mx-auto w-full max-w-6xl">
             {NAV.map((item, i) => (
               <li

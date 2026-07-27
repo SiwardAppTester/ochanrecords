@@ -24,9 +24,13 @@ export default function ContactPage() {
   const socials = activeSocials();
 
   return (
-    <main className="flex-1">
-      <section className="relative overflow-hidden px-6 pb-20 pt-40 sm:px-10">
-        <LightWash origin="top-left" />
+    <main className="relative flex-1">
+      {/* One wash for the whole page. It used to live inside the hero section,
+          which had `overflow-hidden` and so clipped the glow to a hard-edged
+          band across the top — the line and colour shift that made the page
+          look unfinished. At the page level it fades out smoothly instead. */}
+      <LightWash origin="top-left" />
+      <section className="px-6 pb-20 pt-40 sm:px-10">
         <div className="mx-auto w-full max-w-6xl">
           <p className="eyebrow">Get in touch</p>
           <h1 className="display-lg mt-4 text-bronze">Contact</h1>
@@ -85,9 +89,8 @@ export default function ContactPage() {
               className="text-copper underline decoration-copper/40 underline-offset-4 transition-colors duration-500 hover:decoration-copper"
             >
               the demo portal
-            </Link>{" "}
-            rather than email — it gives you a reference number and a status
-            you can check, instead of a thread that goes quiet.
+            </Link>
+            .
           </p>
         </Reveal>
       </section>

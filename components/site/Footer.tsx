@@ -47,7 +47,7 @@ export function Footer() {
 
             {SOCIALS.length > 0 && (
               <div>
-                <p className="eyebrow mb-4">Elsewhere</p>
+                <p className="eyebrow mb-4">Socials</p>
                 <ul className="space-y-2.5 text-sm">
                   {SOCIALS.map((s) => (
                     <li key={s.key}>

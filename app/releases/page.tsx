@@ -24,10 +24,17 @@ export const revalidate = 3600;
  * When OCH001 exists this becomes the label catalogue and the Spotify feed
  * moves under it as "Elsewhere".
  */
+// Parked for now: the page is meant to be the Ocham catalogue, and until
+// OCH001 exists we're deliberately not filling it with Mats' Spotify
+// discography. Flip to true to bring the Spotify feed back.
+const SHOW_SPOTIFY = false;
+
 export default async function ReleasesPage() {
   const artists = await getArtists();
   const artist = artists[0];
-  const albums = await getDiscography(artist?.links.spotify);
+  const albums = SHOW_SPOTIFY
+    ? await getDiscography(artist?.links.spotify)
+    : [];
 
   return (
     <main className="flex-1">
@@ -45,9 +52,11 @@ export default async function ReleasesPage() {
       ) : (
         <section className="mx-auto w-full max-w-6xl px-6 pb-28 sm:px-10">
           <p className="prose-warm">
-            {spotifyConfigured()
-              ? "Nothing to show yet."
-              : "The discography loads from Spotify — add SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET to .env.local to switch it on."}
+            {!SHOW_SPOTIFY
+              ? "No releases yet — the first record is on the way."
+              : spotifyConfigured()
+                ? "Nothing to show yet."
+                : "The discography loads from Spotify — add SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET to .env.local to switch it on."}
           </p>
         </section>
       )}

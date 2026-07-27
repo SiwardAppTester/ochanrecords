@@ -52,10 +52,8 @@ export default async function Home() {
 
         <div className="relative mx-auto w-full max-w-6xl">
           <div className="flex items-end justify-between gap-10">
-            <p className="max-w-md font-display text-2xl leading-[1.25] text-bronze sm:text-3xl">
-              Groove. Emotion.
-              <br />
-              <em className="italic">Depth.</em>
+            <p className="max-w-2xl font-display text-2xl leading-[1.25] text-bronze sm:text-3xl">
+              Groove. Emotion. <em className="italic">Depth.</em>
             </p>
 
             {/* Small, faint, and sitting just above the ruled footer line —
@@ -79,7 +77,7 @@ export default async function Home() {
           />
           <div className="mt-4 flex items-baseline justify-between font-mono text-[11px] uppercase tracking-[0.22em] text-bronze/55">
             <span>Amsterdam</span>
-            <span className="hidden sm:inline">Independent — Est. 1807</span>
+            <span className="hidden sm:inline">Est. 1807</span>
             <span>Scroll ↓</span>
           </div>
         </div>
@@ -189,7 +187,7 @@ export default async function Home() {
         <div className="mx-auto w-full max-w-6xl px-6 py-32 sm:px-10">
           <Reveal>
             <p className="eyebrow" style={{ color: "var(--color-amber)" }}>
-              Next date
+              Next event
             </p>
             {nextEvent ? (
               <>
@@ -235,7 +233,7 @@ export default async function Home() {
                 letterSpacing: "-0.03em",
               }}
             >
-              Send one track.
+              Demo submission.
             </h2>
             {/* The track itself, as a figure. Sits on the baseline of the
                 headline so the two read as one line rather than as a
@@ -253,16 +251,12 @@ export default async function Home() {
               className="group inline-flex items-baseline gap-4 border-b border-bronze/25 pb-2 transition-colors duration-500 hover:border-copper"
             >
               <span className="font-display text-2xl text-bronze transition-colors duration-500 group-hover:text-copper sm:text-3xl">
-                Open the portal
+                Send your tracks
               </span>
               <span className="font-mono text-xs text-dust transition-transform duration-500 group-hover:translate-x-1">
                 →
               </span>
             </Link>
-
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-dust">
-              We reply to all of them
-            </p>
           </div>
         </Reveal>
       </section>

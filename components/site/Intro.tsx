@@ -19,7 +19,7 @@ export function Intro() {
       className="intro pointer-events-none fixed inset-0 z-[100] flex flex-col items-center justify-center gap-10 bg-bone"
     >
       <Image
-        src="/brand/logo/lockup-dark.png"
+        src="/brand/logo/lockup-dark-v2.png"
         alt=""
         width={900}
         height={900}

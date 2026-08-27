@@ -13,7 +13,7 @@ export function Footer() {
         <div className="flex flex-col gap-12 sm:flex-row sm:justify-between">
           <div>
             <Image
-              src="/brand/logo/lockup-dark.png"
+              src="/brand/logo/lockup-dark-v2.png"
               alt="Ocham Records"
               width={900}
               height={900}

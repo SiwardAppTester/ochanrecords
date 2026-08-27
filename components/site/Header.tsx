@@ -182,7 +182,7 @@ export function Header() {
             style={open ? undefined : logoStyle}
           >
             <Image
-              src="/brand/logo/lockup-dark.png"
+              src="/brand/logo/lockup-dark-v2.png"
               alt="Ocham Records"
               width={900}
               height={900}
@@ -194,7 +194,7 @@ export function Header() {
                 already the light one. */}
             {!inHero && (
               <Image
-                src="/brand/logo/lockup-light.png"
+                src="/brand/logo/lockup-light-v2.png"
                 alt=""
                 aria-hidden
                 width={900}

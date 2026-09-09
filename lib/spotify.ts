@@ -36,13 +36,30 @@ export function spotifyConfigured(): boolean {
 }
 
 /**
- * Access tokens last an hour. Cached for slightly less so a request never
- * races the expiry.
+ * Access tokens last an hour, and the expiry is counted from the moment
+ * Spotify issued them.
+ *
+ * This deliberately does NOT use `next: { revalidate }`. A response cache
+ * expires entries on its own clock and, once an entry goes stale, serves the
+ * old value while refreshing in the background. That is right for content and
+ * wrong for a credential: it hands out a token Spotify has already rejected,
+ * which showed up as a 401 on the albums call while the token request itself
+ * looked fine. A cache entry from a fortnight earlier was still being served.
+ *
+ * So the token is held in module scope with the expiry Spotify reports, the
+ * same way `lastGood` and `throttledUntil` are held below.
  */
+let token: { value: string; expiresAt: number } | null = null;
+
+/** Renew a minute early so a request can't be in flight as it expires. */
+const TOKEN_SAFETY_MARGIN = 60 * 1000;
+
 async function getToken(): Promise<string | null> {
   const id = process.env.SPOTIFY_CLIENT_ID;
   const secret = process.env.SPOTIFY_CLIENT_SECRET;
   if (!id || !secret) return null;
+
+  if (token && Date.now() < token.expiresAt) return token.value;
 
   const res = await fetch(TOKEN_URL, {
     method: "POST",
@@ -51,7 +68,7 @@ async function getToken(): Promise<string | null> {
       Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
     },
     body: "grant_type=client_credentials",
-    next: { revalidate: 3300 },
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -59,8 +76,18 @@ async function getToken(): Promise<string | null> {
     return null;
   }
 
-  const json = (await res.json()) as { access_token?: string };
-  return json.access_token ?? null;
+  const json = (await res.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
+  if (!json.access_token) return null;
+
+  const lifetime = (json.expires_in ?? 3600) * 1000;
+  token = {
+    value: json.access_token,
+    expiresAt: Date.now() + Math.max(lifetime - TOKEN_SAFETY_MARGIN, 0),
+  };
+  return token.value;
 }
 
 type RawAlbum = {

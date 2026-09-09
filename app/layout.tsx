@@ -4,6 +4,7 @@ import { Grain } from "@/components/Grain";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Intro } from "@/components/site/Intro";
+import { SiteChrome } from "@/components/site/SiteChrome";
 import "./globals.css";
 
 // High-contrast editorial serif for display. This is the single choice doing
@@ -46,11 +47,15 @@ export default function RootLayout({
       className={`${instrumentSerif.variable} ${inter.variable} ${geistMono.variable} h-full`}
     >
       <body className="relative flex min-h-full flex-col">
-        <Intro />
-        <Header />
+        <SiteChrome>
+          <Intro />
+          <Header />
+        </SiteChrome>
         {children}
-        <Footer />
-        <Grain />
+        <SiteChrome>
+          <Footer />
+          <Grain />
+        </SiteChrome>
       </body>
     </html>
   );

@@ -30,7 +30,7 @@ export const SITE = {
    * inboxes reads as pretend infrastructure.
    */
   email: {
-    general: "info@ochamrecords.com",
+    general: "info@ochamcollective.com",
   },
 } as const;
 

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { startSubmission } from "./actions";
+
 /**
  * Pitch form.
  *
@@ -11,12 +13,12 @@ import { useState } from "react";
  * rule, so what you see is the page with writing on it rather than a widget
  * dropped onto the page.
  *
- * UI only for now — there is no Supabase project to post to yet. The submit
- * handler is a dead end rather than a fake success: showing a confirmation
- * and an invented reference code would train people to trust a code that
- * doesn't exist.
+ * The audio does not go through our server. `startSubmission` records the
+ * details and hands back a signed URL; the file is PUT straight to Supabase
+ * Storage from here. That is also why the form is submitted by hand instead
+ * of with `<form action={...}>` — a form action would serialise the file
+ * input into the request body and hit the 1MB Server Action cap.
  */
-const BACKEND_READY = false;
 
 const MAX_BYTES = 50 * 1024 * 1024; // must match the demos bucket limit
 
@@ -61,6 +63,8 @@ export function SubmitForm() {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
 
   function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
     const picked = event.target.files?.[0] ?? null;
@@ -77,13 +81,77 @@ export function SubmitForm() {
     setFile(picked);
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!BACKEND_READY) {
-      setNotice(
-        "The portal isn't connected yet — this form is a preview. Nothing was sent.",
-      );
+    if (pending) return;
+
+    const fields = new FormData(event.currentTarget);
+    if (!file) {
+      setFileError("Pick a track to send.");
+      return;
     }
+
+    setPending(true);
+    setNotice(null);
+
+    try {
+      // Only the details travel here. The server writes the row first, then
+      // issues a URL for the audio.
+      const started = await startSubmission({
+        artistName: String(fields.get("artist_name") ?? ""),
+        email: String(fields.get("email") ?? ""),
+        links: String(fields.get("links") ?? ""),
+        message: String(fields.get("message") ?? ""),
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
+      if (!started.ok) {
+        setNotice(started.message);
+        return;
+      }
+
+      // Shaped the way supabase-js posts to a signed upload URL: PUT, the
+      // file under an empty key, cache-control alongside it. No content-type
+      // header — the browser has to set the multipart boundary itself.
+      const body = new FormData();
+      body.append("cacheControl", "3600");
+      body.append("", file);
+
+      const upload = await fetch(started.uploadUrl, { method: "PUT", body });
+      if (!upload.ok) {
+        setNotice(
+          `We have your details as ${started.refCode}, but the track didn't finish uploading. Send it again and mention that code.`,
+        );
+        return;
+      }
+
+      setRefCode(started.refCode);
+    } catch {
+      setNotice("That didn't send. Check your connection and try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  // Once it is in, the form is gone. Leaving the fields on screen behind a
+  // confirmation invites a second identical submission.
+  if (refCode) {
+    return (
+      <div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-amber">
+          Received
+        </p>
+        <p className="display-lg mt-4 text-bone">Thank you.</p>
+        <p className="prose-warm mt-6 max-w-md text-bone/70">
+          Your track is with us. Keep this reference — it is how you can ask
+          after it later.
+        </p>
+        <p className="mt-8 border-l-2 border-amber/50 py-2 pl-4 font-mono text-2xl tracking-[0.18em] text-amber">
+          {refCode}
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -172,10 +240,11 @@ export function SubmitForm() {
       <div className="mt-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <button
           type="submit"
-          className="group inline-flex items-baseline gap-4 border-b border-amber/50 pb-2 transition-colors duration-500 hover:border-amber"
+          disabled={pending}
+          className="group inline-flex items-baseline gap-4 border-b border-amber/50 pb-2 transition-colors duration-500 hover:border-amber disabled:cursor-wait disabled:opacity-50"
         >
           <span className="font-display text-3xl text-bone transition-colors duration-500 group-hover:text-amber sm:text-4xl">
-            Send it
+            {pending ? "Sending…" : "Send it"}
           </span>
           <span className="font-mono text-xs text-amber">→</span>
         </button>

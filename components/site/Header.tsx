@@ -46,6 +46,19 @@ const HERO_SCALE_MOBILE = 3.3;
  */
 const HERO_ANCHOR = 0.4;
 
+/**
+ * The size the logo image is always laid out at, in px: the largest hero
+ * size (the 96px desktop docked box × HERO_SCALE). Every state — hero,
+ * docked, mobile — is a scale *down* from this. Safari draws an image at its
+ * layout size and stretches those pixels under a transform, so scaling a
+ * small logo up came out blurry there; shrinking a large one stays sharp.
+ *
+ * Applied as inline styles, not Tailwind classes: Safari 18 ignored the
+ * arbitrary `var()` classes this used to rely on, which left the logo at
+ * full size on every page but the home page.
+ */
+const LOGO_LAYOUT_PX = 96 * HERO_SCALE;
+
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -59,6 +72,10 @@ export function Header() {
   // The computed transform. Held as state rather than derived at render
   // time because it depends on the element's own measured box.
   const [logoStyle, setLogoStyle] = useState<React.CSSProperties>({});
+
+  // The docked transform on its own, for while the menu is open: the logo
+  // sits in the corner then, wherever the page is scrolled to.
+  const [dockStyle, setDockStyle] = useState<React.CSSProperties>({});
 
   // While the logo is enlarged in the hero it is drawn as a single image —
   // the dark colourway, because the hero photograph is a pale mist. The
@@ -90,11 +107,11 @@ export function Header() {
    * the maths then chases its own tail.
    */
   useEffect(() => {
-    if (!isHome || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setLogoStyle({});
-      setInHero(false);
-      return;
-    }
+    // Everywhere but the home page (or with reduced motion) the logo just
+    // sits docked; it still needs measuring, because docked is a scale down
+    // from LOGO_LAYOUT_PX that depends on the breakpoint.
+    const animate =
+      isHome && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let frame = 0;
     const measure = () => {
@@ -105,6 +122,14 @@ export function Header() {
       // Untransformed: the transform lives on the child span.
       const box = link.getBoundingClientRect();
       if (box.width === 0) return;
+
+      const docked = { transform: `scale(${box.width / LOGO_LAYOUT_PX})` };
+      setDockStyle(docked);
+      if (!animate) {
+        setLogoStyle(docked);
+        setInHero(false);
+        return;
+      }
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -129,14 +154,10 @@ export function Header() {
       const dx = (centredLeft - box.left) * (1 - p);
       const dy = (centredTop - box.top) * (1 - p);
 
-      // The span is laid out at hero size (see below) and `scale` is relative
-      // to the docked box, so convert using the span's real layout width
-      // (offsetWidth ignores transforms) rather than assuming the CSS came
-      // out at exactly box × target. If it didn't, an assumed size would
-      // make the logo too big and pull it off-centre.
-      const laidOut = scaleRef.current?.offsetWidth || box.width * target;
+      // `scale` is relative to the docked box; the image is laid out at
+      // LOGO_LAYOUT_PX, so convert.
       setLogoStyle({
-        transform: `translate(${dx}px, ${dy}px) scale(${(box.width * scale) / laidOut})`,
+        transform: `translate(${dx}px, ${dy}px) scale(${(box.width * scale) / LOGO_LAYOUT_PX})`,
         willChange: p > 0 && p < 1 ? "transform" : undefined,
       });
       // At p === 1 the logo is docked over the same dark hero, so the clipped
@@ -149,7 +170,7 @@ export function Header() {
     };
 
     measure();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    if (animate) window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
       if (frame) cancelAnimationFrame(frame);
@@ -184,26 +205,16 @@ export function Header() {
           onClick={() => setOpen(false)}
           aria-label="Ocham Collective"
           // The link is the docked box (the lockup is square), and it is what
-          // `measure` reads. The hero multiples are handed to CSS so the
-          // default, pre-hydration size can be worked out without JS.
+          // `measure` reads.
           className="pointer-events-auto relative block h-20 w-20 sm:h-24 sm:w-24"
-          style={
-            {
-              "--hero-scale": HERO_SCALE_MOBILE,
-              "--hero-scale-sm": HERO_SCALE,
-            } as React.CSSProperties
-          }
         >
-          {/* Laid out at hero size and scaled *down* to dock, not laid out
-              small and scaled up. Safari draws an image at its layout size
-              and then stretches those pixels under a transform, so an 80px
-              logo blown up 3× came out blurry there. Shrinking a large image
-              stays sharp everywhere. The class transform is the docked
-              state; the inline one from `measure` overrides it. */}
+          {/* Laid out at LOGO_LAYOUT_PX and scaled down by `measure` into
+              whatever state it is in. Before hydration it has no transform
+              and is full size, but the intro curtain covers that moment. */}
           <span
             ref={scaleRef}
-            className="absolute left-0 top-0 block origin-top-left [transform:scale(calc(1/var(--hero-scale)))] sm:[transform:scale(calc(1/var(--hero-scale-sm)))]"
-            style={open ? undefined : logoStyle}
+            className="absolute left-0 top-0 block origin-top-left"
+            style={open ? dockStyle : logoStyle}
           >
             <Image
               src="/brand/logo/lockup-dark-v2.png"
@@ -211,7 +222,8 @@ export function Header() {
               width={900}
               height={900}
               priority
-              className="h-[calc(5rem*var(--hero-scale))] w-auto max-w-none sm:h-[calc(6rem*var(--hero-scale-sm))]"
+              className="max-w-none"
+              style={{ width: LOGO_LAYOUT_PX, height: LOGO_LAYOUT_PX }}
             />
             {/* Light colourway, clipped to whatever part crosses a dark band.
                 Only once docked — in the hero the single image above is
@@ -228,8 +240,12 @@ export function Header() {
                 // width the overlay stretches to the parent box instead of
                 // matching the image under it, which is what made the two
                 // layers drift apart when scaled.
-                className="absolute left-0 top-0 h-[calc(5rem*var(--hero-scale))] w-auto max-w-none sm:h-[calc(6rem*var(--hero-scale-sm))]"
-                style={{ clipPath: bandClip(open ? null : logoBand) }}
+                className="absolute left-0 top-0 max-w-none"
+                style={{
+                  width: LOGO_LAYOUT_PX,
+                  height: LOGO_LAYOUT_PX,
+                  clipPath: bandClip(open ? null : logoBand),
+                }}
               />
             )}
           </span>

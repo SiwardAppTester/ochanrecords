@@ -6,7 +6,7 @@ import { SITE, activeSocials } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Get in touch with Ocham Records.",
+  description: "Get in touch with Ocham Collective.",
 };
 
 /**

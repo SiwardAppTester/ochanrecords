@@ -32,9 +32,12 @@ const DOCK_DISTANCE = 0.55;
  * The mobile figure is lower than desktop only because it starts from a
  * smaller docked size and a narrower frame — the two land at a similar share
  * of the screen rather than a similar multiple.
+ *
+ * Both then raised ~15% (from 3.5 / 2.9) on request — the hero logo read
+ * slightly small once it was rendering sharp — and desktop another ~15%.
  */
-const HERO_SCALE = 3.5;
-const HERO_SCALE_MOBILE = 2.9;
+const HERO_SCALE = 4.6;
+const HERO_SCALE_MOBILE = 3.3;
 
 /**
  * How far up the frame the enlarged logo sits, 0.5 being dead centre.
@@ -126,8 +129,14 @@ export function Header() {
       const dx = (centredLeft - box.left) * (1 - p);
       const dy = (centredTop - box.top) * (1 - p);
 
+      // The span is laid out at hero size (see below) and `scale` is relative
+      // to the docked box, so convert using the span's real layout width
+      // (offsetWidth ignores transforms) rather than assuming the CSS came
+      // out at exactly box × target. If it didn't, an assumed size would
+      // make the logo too big and pull it off-centre.
+      const laidOut = scaleRef.current?.offsetWidth || box.width * target;
       setLogoStyle({
-        transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`,
+        transform: `translate(${dx}px, ${dy}px) scale(${(box.width * scale) / laidOut})`,
         willChange: p > 0 && p < 1 ? "transform" : undefined,
       });
       // At p === 1 the logo is docked over the same dark hero, so the clipped
@@ -173,21 +182,36 @@ export function Header() {
           ref={logoRef}
           href="/"
           onClick={() => setOpen(false)}
-          aria-label="Ocham Records"
-          className="pointer-events-auto relative block"
+          aria-label="Ocham Collective"
+          // The link is the docked box (the lockup is square), and it is what
+          // `measure` reads. The hero multiples are handed to CSS so the
+          // default, pre-hydration size can be worked out without JS.
+          className="pointer-events-auto relative block h-20 w-20 sm:h-24 sm:w-24"
+          style={
+            {
+              "--hero-scale": HERO_SCALE_MOBILE,
+              "--hero-scale-sm": HERO_SCALE,
+            } as React.CSSProperties
+          }
         >
+          {/* Laid out at hero size and scaled *down* to dock, not laid out
+              small and scaled up. Safari draws an image at its layout size
+              and then stretches those pixels under a transform, so an 80px
+              logo blown up 3× came out blurry there. Shrinking a large image
+              stays sharp everywhere. The class transform is the docked
+              state; the inline one from `measure` overrides it. */}
           <span
             ref={scaleRef}
-            className="relative block origin-top-left"
+            className="absolute left-0 top-0 block origin-top-left [transform:scale(calc(1/var(--hero-scale)))] sm:[transform:scale(calc(1/var(--hero-scale-sm)))]"
             style={open ? undefined : logoStyle}
           >
             <Image
               src="/brand/logo/lockup-dark-v2.png"
-              alt="Ocham Records"
+              alt="Ocham Collective"
               width={900}
               height={900}
               priority
-              className="h-20 w-auto sm:h-24"
+              className="h-[calc(5rem*var(--hero-scale))] w-auto max-w-none sm:h-[calc(6rem*var(--hero-scale-sm))]"
             />
             {/* Light colourway, clipped to whatever part crosses a dark band.
                 Only once docked — in the hero the single image above is
@@ -204,7 +228,7 @@ export function Header() {
                 // width the overlay stretches to the parent box instead of
                 // matching the image under it, which is what made the two
                 // layers drift apart when scaled.
-                className="absolute left-0 top-0 h-20 w-auto sm:h-24"
+                className="absolute left-0 top-0 h-[calc(5rem*var(--hero-scale))] w-auto max-w-none sm:h-[calc(6rem*var(--hero-scale-sm))]"
                 style={{ clipPath: bandClip(open ? null : logoBand) }}
               />
             )}
@@ -306,7 +330,7 @@ export function Header() {
           </ul>
 
           <p className="mx-auto mt-10 w-full max-w-6xl font-mono text-[11px] uppercase tracking-[0.22em] text-dust">
-            Ocham Records — Est. 1807
+            Ocham Collective — Est. 1807
           </p>
         </nav>
       </div>

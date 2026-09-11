@@ -53,7 +53,7 @@ export default async function Home() {
         <div className="relative mx-auto w-full max-w-6xl">
           <div className="flex items-end justify-between gap-10">
             <p className="max-w-2xl font-display text-2xl leading-[1.25] text-bronze sm:text-3xl">
-              Groove. Emotion. <em className="italic">Depth.</em>
+              Music. Design. <em className="italic">Community.</em>
             </p>
 
             {/* Small, faint, and sitting just above the ruled footer line —

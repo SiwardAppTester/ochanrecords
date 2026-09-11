@@ -6,7 +6,7 @@ import { SubmitForm } from "./SubmitForm";
 export const metadata: Metadata = {
   title: "Submit a demo",
   description:
-    "Send a track to Ocham Records. You get a reference code and can check your submission status at any time.",
+    "Send a track to Ocham Collective. You get a reference code and can check your submission status at any time.",
 };
 
 /**

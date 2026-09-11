@@ -7,7 +7,7 @@ import { getArtists, getReleasesByArtist } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Artists",
-  description: "The Ocham Records roster.",
+  description: "The Ocham Collective roster.",
 };
 
 export default async function ArtistsPage() {

@@ -30,10 +30,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ocham Records",
-    template: "%s — Ocham Records",
+    default: "Ocham Collective",
+    template: "%s — Ocham Collective",
   },
-  description: "An independent record label.",
+  description: "Music. Design. Community.",
 };
 
 export default function RootLayout({

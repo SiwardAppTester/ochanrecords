@@ -6,7 +6,7 @@ import { formatEventDate } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Dates",
-  description: "Upcoming and past Ocham Records dates.",
+  description: "Upcoming and past Ocham Collective dates.",
 };
 
 // Revalidate hourly: "upcoming" vs "past" is computed from the current time,

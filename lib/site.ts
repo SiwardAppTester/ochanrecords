@@ -8,7 +8,7 @@
  */
 
 export const SITE = {
-  name: "Ocham Records",
+  name: "Ocham Collective",
   established: "1807",
 
   /**
@@ -16,12 +16,12 @@ export const SITE = {
    * in lib/content/placeholder.ts and are what the artist page links to.
    */
   socials: {
-    instagram: "https://www.instagram.com/ochamrecords",
+    instagram: "https://www.instagram.com/ochamcollective",
     // The label's Spotify *user* profile, not an artist page — this is the
     // one that carries the playlists. The `?si=` token on the share link is
     // a referrer tag tied to whoever copied it, so it is stripped.
     spotify: "https://open.spotify.com/user/31stgsnfv2eowklmpflvaw7pzb74",
-    soundcloud: "https://soundcloud.com/ochamrecords",
+    soundcloud: "https://soundcloud.com/ochamcollective",
     bandcamp: "",
   } as Record<string, string>,
 

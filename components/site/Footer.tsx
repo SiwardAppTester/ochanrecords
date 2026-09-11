@@ -14,14 +14,11 @@ export function Footer() {
           <div>
             <Image
               src="/brand/logo/lockup-dark-v2.png"
-              alt="Ocham Records"
+              alt="Ocham Collective"
               width={900}
               height={900}
               className="h-32 w-auto"
             />
-            <p className="mt-6 max-w-xs text-sm leading-relaxed text-dust">
-              An independent record label. A short roster, released slowly.
-            </p>
           </div>
 
           <div className="flex gap-16">
@@ -70,7 +67,7 @@ export function Footer() {
         <div className="rule mt-14 mb-6" />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="eyebrow">© {new Date().getFullYear()} Ocham Records</p>
+          <p className="eyebrow">© {new Date().getFullYear()} Ocham Collective</p>
           <Link
             href="/submit"
             className="eyebrow transition-colors duration-500 hover:text-copper"
